@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CTRL+REVIEW — Gamer Reviews by Real Gamers</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #050810;
+    --panel:     #0a0e1a;
+    --border:    #1a2340;
+    --cyan:      #00f5ff;
+    --green:     #00ff88;
+    --red:       #ff2d55;
+    --yellow:    #ffd60a;
+    --text:      #c8d6f0;
+    --muted:     #4a5680;
+    --glow-c:    0 0 20px #00f5ff55;
+    --glow-g:    0 0 20px #00ff8855;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    overflow-x: hidden;
+    cursor: default;
+  }
+
+  /* ── SCANLINE overlay ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
+  }
+
+  /* ── NOISE grain ── */
+  body::after {
+    content: '';
+    position: fixed; inset: 0; z-index: 9998; pointer-events: none; opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ── NAVBAR ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 40px; height: 64px;
+    background: rgba(5,8,16,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900; font-size: 20px;
+    color: var(--cyan);
+    text-shadow: var(--glow-c);
+    letter-spacing: 2px;
+  }
+  .logo span { color: var(--green); }
+  nav ul { list-style: none; display: flex; gap: 32px; }
+  nav ul a {
+    color: var(--muted); text-decoration: none;
+    font-weight: 600; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase;
+    transition: color .2s;
+  }
+  nav ul a:hover { color: var(--cyan); }
+  .nav-btn {
+    background: transparent; border: 1px solid var(--cyan);
+    color: var(--cyan); font-family: 'Orbitron', sans-serif;
+    font-size: 11px; letter-spacing: 2px;
+    padding: 8px 20px; cursor: pointer;
+    transition: all .2s;
+  }
+  .nav-btn:hover { background: var(--cyan); color: var(--bg); box-shadow: var(--glow-c); }
+
+  /* ── HERO ── */
+  #hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 80px 40px 60px;
+    position: relative; overflow: hidden;
+  }
+
+  /* Grid background */
+  #hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,245,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,245,255,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridScroll 20s linear infinite;
+  }
+  @keyframes gridScroll {
+    from { background-position: 0 0; }
+    to   { background-position: 0 60px; }
+  }
+
+  /* Radial glow behind hero */
+  #hero::after {
+    content: '';
+    position: absolute;
+    width: 800px; height: 800px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,245,255,0.06) 0%, transparent 70%);
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  .hero-content { position: relative; z-index: 2; text-align: center; max-width: 900px; }
+
+  .hero-tag {
+    display: inline-block;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px; letter-spacing: 3px; color: var(--green);
+    border: 1px solid var(--green); padding: 4px 16px; margin-bottom: 32px;
+    animation: fadeIn .8s ease both;
+  }
+
+  .hero-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(42px, 8vw, 96px);
+    font-weight: 900; line-height: 1;
+    color: #fff;
+    margin-bottom: 12px;
+    animation: fadeIn .8s .2s ease both;
+  }
+  .hero-title .accent { color: var(--cyan); text-shadow: var(--glow-c); }
+
+  .hero-sub {
+    font-size: 18px; color: var(--muted);
+    max-width: 560px; margin: 0 auto 48px;
+    line-height: 1.6; font-weight: 300;
+    animation: fadeIn .8s .4s ease both;
+  }
+
+  .hero-btns {
+    display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+    animation: fadeIn .8s .6s ease both;
+  }
+  .btn-primary {
+    background: var(--cyan); color: var(--bg);
+    border: none; font-family: 'Orbitron', sans-serif;
+    font-size: 12px; font-weight: 700; letter-spacing: 2px;
+    padding: 14px 36px; cursor: pointer;
+    transition: all .2s; clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px #00f5ff55; }
+  .btn-secondary {
+    background: transparent; color: var(--text);
+    border: 1px solid var(--border);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px; letter-spacing: 2px;
+    padding: 14px 36px; cursor: pointer;
+    transition: all .2s;
+  }
+  .btn-secondary:hover { border-color: var(--cyan); color: var(--cyan); }
+
+  /* ── SCENE: Computer + Controller ── */
+  .hero-scene {
+    position: relative; z-index: 2;
+    margin-top: 64px;
+    animation: fadeIn .8s .8s ease both;
+  }
+
+  .scene-svg { width: min(700px, 90vw); }
+
+  /* ── STATS BAR ── */
+  .stats-bar {
+    position: relative; z-index: 2;
+    display: flex; gap: 0; margin-top: 56px; width: 100%;
+    max-width: 700px;
+    border: 1px solid var(--border);
+    animation: fadeIn .8s 1s ease both;
+  }
+  .stat-item {
+    flex: 1; padding: 20px 24px; text-align: center;
+    border-right: 1px solid var(--border);
+  }
+  .stat-item:last-child { border-right: none; }
+  .stat-num {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 28px; font-weight: 900;
+    color: var(--cyan);
+  }
+  .stat-label { font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-top: 4px; }
+
+  /* ── SECTIONS ── */
+  section { padding: 100px 40px; max-width: 1200px; margin: 0 auto; }
+  .section-header { margin-bottom: 56px; }
+  .section-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; letter-spacing: 3px; color: var(--green);
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(24px, 4vw, 42px); font-weight: 900; color: #fff;
+  }
+  .section-title .acc { color: var(--cyan); }
+
+  /* ── GAME SEARCH ── */
+  .search-wrap {
+    display: flex; gap: 12px; margin-bottom: 40px;
+  }
+  .search-input {
+    flex: 1; background: var(--panel); border: 1px solid var(--border);
+    color: var(--text); font-family: 'Share Tech Mono', monospace;
+    font-size: 14px; padding: 14px 20px; outline: none;
+    transition: border-color .2s;
+  }
+  .search-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan); }
+  .search-input::placeholder { color: var(--muted); }
+  .search-btn {
+    background: var(--green); color: var(--bg); border: none;
+    font-family: 'Orbitron', sans-serif; font-size: 11px;
+    font-weight: 700; letter-spacing: 2px; padding: 14px 28px;
+    cursor: pointer; transition: all .2s;
+  }
+  .search-btn:hover { box-shadow: var(--glow-g); transform: translateY(-1px); }
+
+  /* ── GAME GRID ── */
+  #games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .game-card {
+    background: var(--panel); border: 1px solid var(--border);
+    overflow: hidden; cursor: pointer;
+    transition: border-color .2s, transform .2s;
+    position: relative;
+  }
+  .game-card:hover { border-color: var(--cyan); transform: translateY(-4px); box-shadow: var(--glow-c); }
+  .game-card-img {
+    width: 100%; height: 160px; object-fit: cover;
+    display: block; background: var(--border);
+    position: relative; overflow: hidden;
+  }
+  .game-card-img img { width: 100%; height: 100%; object-fit: cover; }
+  .game-card-img-placeholder {
+    width: 100%; height: 160px;
+    background: linear-gradient(135deg, #0a0e1a, #1a2340);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 48px;
+  }
+  .card-rating {
+    position: absolute; top: 10px; right: 10px;
+    background: var(--bg); border: 1px solid var(--yellow);
+    color: var(--yellow); font-family: 'Orbitron', sans-serif;
+    font-size: 12px; font-weight: 700;
+    padding: 4px 10px;
+  }
+  .game-card-body { padding: 16px 20px 20px; }
+  .game-title {
+    font-family: 'Orbitron', sans-serif; font-size: 13px;
+    font-weight: 700; color: #fff; margin-bottom: 6px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .game-meta {
+    font-size: 12px; color: var(--muted); margin-bottom: 12px;
+    font-family: 'Share Tech Mono', monospace;
+  }
+  .review-btn {
+    width: 100%; background: transparent; border: 1px solid var(--border);
+    color: var(--cyan); font-family: 'Orbitron', sans-serif;
+    font-size: 10px; letter-spacing: 2px; padding: 9px;
+    cursor: pointer; transition: all .2s;
+  }
+  .review-btn:hover { background: var(--cyan); color: var(--bg); }
+
+  /* ── REVIEWS ── */
+  #reviews-list { display: flex; flex-direction: column; gap: 20px; }
+  .review-card {
+    background: var(--panel); border: 1px solid var(--border);
+    padding: 28px 32px; position: relative;
+    border-left: 3px solid var(--cyan);
+    transition: border-color .2s;
+  }
+  .review-card:hover { border-color: var(--green); border-left-color: var(--green); }
+  .review-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .reviewer { display: flex; align-items: center; gap: 14px; }
+  .avatar {
+    width: 42px; height: 42px; border-radius: 2px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; background: var(--border);
+    border: 1px solid var(--cyan);
+  }
+  .reviewer-name { font-family: 'Orbitron', sans-serif; font-size: 13px; color: #fff; }
+  .reviewer-tag  { font-size: 11px; color: var(--muted); font-family: 'Share Tech Mono', monospace; }
+  .stars { color: var(--yellow); font-size: 18px; letter-spacing: 2px; }
+  .review-game-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; color: var(--cyan); letter-spacing: 2px;
+    margin-bottom: 10px; text-transform: uppercase;
+  }
+  .review-text { font-size: 15px; line-height: 1.7; color: var(--text); }
+  .review-date { font-size: 11px; color: var(--muted); margin-top: 14px; font-family: 'Share Tech Mono', monospace; }
+  .verified { color: var(--green); font-size: 11px; font-family: 'Share Tech Mono', monospace; }
+
+  /* ── SUBMIT FORM ── */
+  #submit { background: var(--panel); border: 1px solid var(--border); padding: 60px; margin: 0 40px 100px; max-width: 1120px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .form-group { display: flex; flex-direction: column; gap: 8px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; font-family: 'Share Tech Mono', monospace; }
+  input, textarea, select {
+    background: var(--bg); border: 1px solid var(--border);
+    color: var(--text); font-family: 'Rajdhani', sans-serif;
+    font-size: 15px; padding: 12px 16px; outline: none;
+    transition: border-color .2s;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--cyan); }
+  textarea { resize: vertical; min-height: 120px; }
+  select option { background: var(--bg); }
+  .star-select { display: flex; gap: 8px; margin-top: 4px; }
+  .star-btn {
+    font-size: 28px; cursor: pointer; color: var(--border);
+    background: none; border: none;
+    transition: color .15s, transform .15s;
+  }
+  .star-btn.active, .star-btn:hover { color: var(--yellow); transform: scale(1.2); }
+  .submit-btn {
+    margin-top: 32px; width: 100%;
+    background: var(--cyan); color: var(--bg); border: none;
+    font-family: 'Orbitron', sans-serif; font-size: 13px;
+    font-weight: 700; letter-spacing: 3px; padding: 18px;
+    cursor: pointer; transition: all .2s;
+  }
+  .submit-btn:hover { box-shadow: 0 0 40px #00f5ff44; }
+
+  /* ── LOADING ── */
+  .loading {
+    display: flex; align-items: center; justify-content: center;
+    gap: 12px; padding: 60px; color: var(--muted);
+    font-family: 'Share Tech Mono', monospace; font-size: 13px;
+  }
+  .spinner {
+    width: 20px; height: 20px; border: 2px solid var(--border);
+    border-top-color: var(--cyan); border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 40px; text-align: center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px; color: var(--muted);
+  }
+  footer span { color: var(--cyan); }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(5,8,16,0.9);
+    z-index: 200; display: none; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--panel); border: 1px solid var(--cyan);
+    padding: 40px; max-width: 520px; width: 90%; position: relative;
+    box-shadow: 0 0 60px #00f5ff22;
+    animation: modalIn .3s ease;
+  }
+  @keyframes modalIn { from { transform: scale(.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .modal-close {
+    position: absolute; top: 16px; right: 16px;
+    background: none; border: none; color: var(--muted);
+    font-size: 22px; cursor: pointer;
+  }
+  .modal-close:hover { color: var(--red); }
+  .modal-game-name { font-family: 'Orbitron', sans-serif; font-size: 18px; color: var(--cyan); margin-bottom: 8px; }
+  .modal-meta { font-size: 13px; color: var(--muted); margin-bottom: 20px; font-family: 'Share Tech Mono', monospace; }
+  .modal input, .modal textarea {
+    width: 100%; margin-bottom: 14px;
+  }
+  .modal-star-row { display: flex; gap: 8px; margin-bottom: 16px; }
+  .modal-star { font-size: 32px; cursor: pointer; color: var(--border); transition: color .1s; background: none; border: none; }
+  .modal-star.lit { color: var(--yellow); }
+  .modal-submit {
+    width: 100%; background: var(--cyan); color: var(--bg); border: none;
+    font-family: 'Orbitron', sans-serif; font-size: 12px;
+    font-weight: 700; letter-spacing: 2px; padding: 14px;
+    cursor: pointer; transition: all .2s;
+  }
+  .modal-submit:hover { box-shadow: 0 0 30px #00f5ff44; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @media (max-width: 640px) {
+    nav ul { display: none; }
+    .form-grid { grid-template-columns: 1fr; }
+    #submit { padding: 32px 20px; margin: 0 16px 60px; }
+    section { padding: 60px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">CTRL<span>+</span>REVIEW</div>
+  <ul>
+    <li><a href="#games">Games</a></li>
+    <li><a href="#reviews">Reviews</a></li>
+    <li><a href="#submit">Submit</a></li>
+  </ul>
+  <button class="nav-btn" onclick="document.getElementById('submit').scrollIntoView({behavior:'smooth'})">WRITE REVIEW</button>
+</nav>
+
+<!-- HERO -->
+<div id="hero">
+  <div class="hero-content">
+    <div class="hero-tag">// REAL GAMERS. REAL OPINIONS. NO FLUFF.</div>
+    <h1 class="hero-title">GAME<br><span class="accent">FEEDBACK</span></h1>
+    <p class="hero-sub">The only review platform built by gamers, for gamers. Honest takes. Zero sponsored content. Pure controller-in-hand truth.</p>
+    <div class="hero-btns">
+      <button class="btn-primary" onclick="document.getElementById('games').scrollIntoView({behavior:'smooth'})">BROWSE GAMES</button>
+      <button class="btn-secondary" onclick="document.getElementById('reviews').scrollIntoView({behavior:'smooth'})">READ REVIEWS</button>
+    </div>
+  </div>
+
+  <!-- SVG Scene: Monitor + Controller -->
+  <div class="hero-scene">
+    <svg class="scene-svg" viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+      <!-- Glow effects -->
+      <defs>
+        <filter id="glow-c"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="glow-g"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <linearGradient id="screenGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#0a1628"/>
+          <stop offset="100%" stop-color="#050810"/>
+        </linearGradient>
+        <linearGradient id="monitorGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#161d30"/>
+          <stop offset="100%" stop-color="#0a0e1a"/>
+        </linearGradient>
+        <linearGradient id="ctrlGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#f0f0f0"/>
+          <stop offset="100%" stop-color="#d0d0d8"/>
+        </linearGradient>
+      </defs>
+
+      <!-- ── MONITOR ── -->
+      <!-- Stand base -->
+      <ellipse cx="280" cy="298" rx="60" ry="8" fill="#0c1120" stroke="#1a2340" stroke-width="1"/>
+      <!-- Stand neck -->
+      <rect x="272" y="268" width="16" height="34" rx="2" fill="#131929" stroke="#1a2340" stroke-width="1"/>
+      <!-- Monitor outer -->
+      <rect x="90" y="30" width="380" height="248" rx="8" fill="url(#monitorGrad)" stroke="#1a2340" stroke-width="2"/>
+      <!-- Monitor inner bezel -->
+      <rect x="98" y="38" width="364" height="232" rx="5" fill="#080c18" stroke="#0f1525" stroke-width="1"/>
+      <!-- Screen -->
+      <rect x="106" y="46" width="348" height="216" rx="3" fill="url(#screenGrad)"/>
+
+      <!-- Screen content: game-style UI -->
+      <!-- Scanlines on screen -->
+      <rect x="106" y="46" width="348" height="216" rx="3" fill="url(#screenLines)" opacity="0.3"/>
+      <!-- Health bar -->
+      <rect x="122" y="62" width="120" height="8" rx="2" fill="#1a2340"/>
+      <rect x="122" y="62" width="85" height="8" rx="2" fill="#00ff88" filter="url(#glow-g)"/>
+      <text x="122" y="57" fill="#00ff88" font-family="'Share Tech Mono',monospace" font-size="8">HP</text>
+      <!-- Mana bar -->
+      <rect x="122" y="76" width="120" height="8" rx="2" fill="#1a2340"/>
+      <rect x="122" y="76" width="60" height="8" rx="2" fill="#00f5ff" filter="url(#glow-c)"/>
+      <text x="122" y="72" fill="#00f5ff" font-family="'Share Tech Mono',monospace" font-size="8">MP</text>
+      <!-- Score top right -->
+      <text x="430" y="65" fill="#ffd60a" font-family="'Share Tech Mono',monospace" font-size="10" text-anchor="end">SCORE: 98,420</text>
+      <!-- Center: rating stars -->
+      <text x="280" y="140" text-anchor="middle" fill="#ffd60a" font-size="28" filter="url(#glow-c)">★★★★★</text>
+      <text x="280" y="165" text-anchor="middle" fill="#ffffff" font-family="'Orbitron',sans-serif" font-size="13" font-weight="900">MASTERPIECE</text>
+      <text x="280" y="182" text-anchor="middle" fill="#4a5680" font-family="'Share Tech Mono',monospace" font-size="9">VERIFIED GAMER REVIEW</text>
+      <!-- Bottom HUD bar -->
+      <rect x="106" y="232" width="348" height="30" fill="#06090f" opacity="0.9"/>
+      <text x="122" y="252" fill="#00f5ff" font-family="'Share Tech Mono',monospace" font-size="8">[ A ] CONFIRM</text>
+      <text x="230" y="252" fill="#00ff88" font-family="'Share Tech Mono',monospace" font-size="8">[ B ] BACK</text>
+      <text x="320" y="252" fill="#ffd60a" font-family="'Share Tech Mono',monospace" font-size="8">[ START ] MENU</text>
+      <!-- Corner decorators -->
+      <polyline points="106,46 106,60 120,60" fill="none" stroke="#00f5ff" stroke-width="1.5" filter="url(#glow-c)"/>
+      <polyline points="454,46 454,60 440,60" fill="none" stroke="#00f5ff" stroke-width="1.5" filter="url(#glow-c)"/>
+      <polyline points="106,262 106,248 120,248" fill="none" stroke="#00f5ff" stroke-width="1.5" filter="url(#glow-c)"/>
+      <polyline points="454,262 454,248 440,248" fill="none" stroke="#00f5ff" stroke-width="1.5" filter="url(#glow-c)"/>
+      <!-- Monitor power LED -->
+      <circle cx="280" cy="280" r="3" fill="#00ff88" filter="url(#glow-g)">
+        <animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite"/>
+      </circle>
+
+      <!-- ── CONTROLLER (right side) ── -->
+      <!-- Body -->
+      <path d="M530,140 Q520,120 510,118 L490,116 Q475,115 468,126 L454,155 Q448,170 450,185 L452,205 Q454,225 462,232 Q470,240 480,237 L490,232 Q498,225 505,218 L515,218 Q522,225 530,232 L540,237 Q550,240 558,232 Q566,225 568,205 L570,185 Q572,170 566,155 L552,126 Q545,115 530,140 Z" fill="url(#ctrlGrad)" stroke="#aaaacc" stroke-width="1.5"/>
+      <!-- Left grip extension -->
+      <path d="M454,190 Q445,195 443,210 L444,228 Q446,240 454,242 Q462,244 466,235 L468,215" fill="url(#ctrlGrad)" stroke="#aaaacc" stroke-width="1.5"/>
+      <!-- Right grip extension -->
+      <path d="M566,190 Q575,195 577,210 L576,228 Q574,240 566,242 Q558,244 554,235 L552,215" fill="url(#ctrlGrad)" stroke="#aaaacc" stroke-width="1.5"/>
+
+      <!-- D-pad -->
+      <rect x="465" y="162" width="10" height="28" rx="2" fill="#555577" stroke="#333355" stroke-width="1"/>
+      <rect x="459" y="168" width="22" height="10" rx="2" fill="#555577" stroke="#333355" stroke-width="1"/>
+      <!-- D-pad center dot -->
+      <rect x="468" y="171" width="4" height="4" rx="1" fill="#333355"/>
+
+      <!-- Face buttons -->
+      <circle cx="543" cy="167" r="5" fill="#ff2d55" stroke="#ff2d5566" stroke-width="2"><animate attributeName="opacity" values="1;0.7;1" dur="1.5s" repeatCount="indefinite"/></circle>
+      <circle cx="553" cy="177" r="5" fill="#ffd60a" stroke="#ffd60a66" stroke-width="2"/>
+      <circle cx="533" cy="177" r="5" fill="#00f5ff" stroke="#00f5ff66" stroke-width="2"/>
+      <circle cx="543" cy="187" r="5" fill="#00ff88" stroke="#00ff8866" stroke-width="2"/>
+      <!-- Button labels -->
+      <text x="543" y="170" text-anchor="middle" fill="#fff" font-size="6" font-weight="bold">✕</text>
+      <text x="553" y="180" text-anchor="middle" fill="#fff" font-size="6" font-weight="bold">○</text>
+      <text x="533" y="180" text-anchor="middle" fill="#fff" font-size="6" font-weight="bold">□</text>
+      <text x="543" y="190" text-anchor="middle" fill="#fff" font-size="6" font-weight="bold">△</text>
+
+      <!-- Left analog stick -->
+      <circle cx="482" cy="197" r="11" fill="#444466" stroke="#333355" stroke-width="1.5"/>
+      <circle cx="482" cy="197" r="7" fill="#333355" stroke="#222244" stroke-width="1"/>
+      <circle cx="480" cy="195" r="3" fill="#555577"/>
+      <!-- Right analog stick -->
+      <circle cx="538" cy="205" r="11" fill="#444466" stroke="#333355" stroke-width="1.5"/>
+      <circle cx="538" cy="205" r="7" fill="#333355" stroke="#222244" stroke-width="1"/>
+      <circle cx="536" cy="203" r="3" fill="#555577"/>
+
+      <!-- Start / options buttons -->
+      <rect x="501" y="162" width="16" height="5" rx="2.5" fill="#aaaacc"/>
+      <rect x="504" y="170" width="12" height="5" rx="2.5" fill="#aaaacc"/>
+
+      <!-- Shoulder bump indicator -->
+      <rect x="462" y="115" width="35" height="6" rx="3" fill="#ccccdd"/>
+      <rect x="523" y="115" width="35" height="6" rx="3" fill="#ccccdd"/>
+      <!-- L/R labels -->
+      <text x="479" y="122" text-anchor="middle" fill="#555577" font-family="'Share Tech Mono',monospace" font-size="7">L</text>
+      <text x="540" y="122" text-anchor="middle" fill="#555577" font-family="'Share Tech Mono',monospace" font-size="7">R</text>
+
+      <!-- Controller USB cable going to monitor -->
+      <path d="M462,195 Q420,200 400,220 Q380,240 370,255" fill="none" stroke="#1a2340" stroke-width="2" stroke-dasharray="4,4"/>
+
+    </svg>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="stat-item"><div class="stat-num" id="stat-reviews">12,847</div><div class="stat-label">Reviews</div></div>
+    <div class="stat-item"><div class="stat-num" id="stat-games">3,200+</div><div class="stat-label">Games</div></div>
+    <div class="stat-item"><div class="stat-num">100%</div><div class="stat-label">Real Gamers</div></div>
+    <div class="stat-item"><div class="stat-num">0</div><div class="stat-label">Sponsored Posts</div></div>
+  </div>
+</div>
+
+<!-- GAMES SECTION -->
+<section id="games" style="max-width:1200px;margin:0 auto;">
+  <div class="section-header">
+    <div class="section-tag">// LIVE FROM RAWG GAMES DATABASE</div>
+    <h2 class="section-title">FIND A <span class="acc">GAME</span></h2>
+  </div>
+  <div class="search-wrap">
+    <input type="text" class="search-input" id="game-search" placeholder="Search a game title..." onkeydown="if(event.key==='Enter')searchGames()">
+    <button class="search-btn" onclick="searchGames()">SEARCH</button>
+  </div>
+  <div id="games-grid"><div class="loading"><div class="spinner"></div> LOADING GAMES FROM API...</div></div>
+</section>
+
+<!-- REVIEWS SECTION -->
+<section id="reviews" style="max-width:1200px;margin:0 auto;">
+  <div class="section-header">
+    <div class="section-tag">// COMMUNITY REVIEWS</div>
+    <h2 class="section-title">LATEST <span class="acc">FEEDBACK</span></h2>
+  </div>
+  <div id="reviews-list"></div>
+</section>
+
+<!-- SUBMIT SECTION -->
+<div id="submit" style="max-width:1200px;margin:0 auto 100px;padding:0 40px;">
+  <div style="background:var(--panel);border:1px solid var(--border);padding:60px 60px 48px;">
+    <div class="section-tag" style="margin-bottom:12px;">// SHARE YOUR EXPERIENCE</div>
+    <h2 class="section-title" style="margin-bottom:40px;">WRITE A <span class="acc">REVIEW</span></h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Gamer Tag</label>
+        <input type="text" id="f-name" placeholder="YourGamertag#1337">
+      </div>
+      <div class="form-group">
+        <label>Game Title</label>
+        <input type="text" id="f-game" placeholder="e.g. Elden Ring">
+      </div>
+      <div class="form-group full">
+        <label>Your Rating</label>
+        <div class="star-select" id="star-select">
+          <button class="star-btn" data-val="1" onclick="setStars(1)">★</button>
+          <button class="star-btn" data-val="2" onclick="setStars(2)">★</button>
+          <button class="star-btn" data-val="3" onclick="setStars(3)">★</button>
+          <button class="star-btn" data-val="4" onclick="setStars(4)">★</button>
+          <button class="star-btn" data-val="5" onclick="setStars(5)">★</button>
+        </div>
+      </div>
+      <div class="form-group full">
+        <label>Your Review</label>
+        <textarea id="f-review" placeholder="Give your honest take — no spoilers unless you warn us..."></textarea>
+      </div>
+    </div>
+    <button class="submit-btn" onclick="submitReview()">TRANSMIT REVIEW →</button>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div style="margin-bottom:8px;font-size:16px;font-family:'Orbitron',sans-serif;color:#fff;">CTRL<span>+</span>REVIEW</div>
+  Built for gamers. Powered by <span>RAWG API</span>. Zero corporate influence. <span>GG</span>.
+</footer>
+
+<!-- REVIEW MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-game-name" id="modal-game-name"></div>
+    <div class="modal-meta" id="modal-game-meta"></div>
+    <div class="modal-star-row" id="modal-stars">
+      <button class="modal-star" onclick="setModalStars(1)">★</button>
+      <button class="modal-star" onclick="setModalStars(2)">★</button>
+      <button class="modal-star" onclick="setModalStars(3)">★</button>
+      <button class="modal-star" onclick="setModalStars(4)">★</button>
+      <button class="modal-star" onclick="setModalStars(5)">★</button>
+    </div>
+    <input type="text" id="modal-gamer" placeholder="Your gamer tag" style="width:100%;margin-bottom:12px;">
+    <textarea id="modal-text" placeholder="Write your honest review..." style="width:100%;min-height:100px;margin-bottom:0;"></textarea>
+    <button class="modal-submit" onclick="submitModalReview()" style="margin-top:16px;">SUBMIT REVIEW</button>
+  </div>
+</div>
+
+<script>
+// ── State ──
+let selectedStars    = 0;
+let modalStars       = 0;
+let currentModalGame = null;
+let allReviews       = [];
+
+// ── Sample seed reviews ──
+const seedReviews = [
+  { gamer: "NightOwl_42", game: "Elden Ring", stars: 5, text: "Absolute masterpiece. From Software outdid themselves. Every corner hides a new surprise — the world design is unmatched. 300 hours and I still find new things.", date: "2026-04-12", avatar: "🦅" },
+  { gamer: "PixelPunisher", game: "Baldur's Gate 3", stars: 5, text: "This is the RPG I've been waiting 20 years for. The writing is incredible, the choices actually matter. Larian should be teaching classes.", date: "2026-04-08", avatar: "🧙" },
+  { gamer: "SteelThunder99", game: "Starfield", stars: 3, text: "Decent Bethesda game but the procedurally generated planets are a letdown. Main story is solid but the exploration feels hollow compared to their older stuff.", date: "2026-03-29", avatar: "🚀" },
+  { gamer: "CritHitQueen", game: "Hades II", stars: 5, text: "Supergiant did it again. The roguelike loop is perfect. Just when you think you know all the builds, a new synergy breaks your brain. Endless.", date: "2026-04-18", avatar: "⚡" },
+  { gamer: "RetroGhost", game: "Hollow Knight: Silksong", stars: 4, text: "Worth the wait. The movement feels incredible and the world design is beautiful. A couple of boss fights feel unfair but 90% of it is brilliant.", date: "2026-04-20", avatar: "👻" },
+];
+
+// ── Render reviews ──
+function renderReviews(list) {
+  const el = document.getElementById('reviews-list');
+  if (!list.length) { el.innerHTML = '<div class="loading">NO REVIEWS YET. BE THE FIRST.</div>'; return; }
+  el.innerHTML = list.map(r => `
+    <div class="review-card">
+      <div class="review-header">
+        <div class="reviewer">
+          <div class="avatar">${r.avatar || '🎮'}</div>
+          <div>
+            <div class="reviewer-name">${r.gamer}</div>
+            <div class="reviewer-tag">// verified gamer ✔</div>
+          </div>
+        </div>
+        <div>
+          <div class="stars">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</div>
+        </div>
+      </div>
+      <div class="review-game-title">[ ${r.game} ]</div>
+      <div class="review-text">${r.text}</div>
+      <div class="review-date">${r.date} &nbsp;·&nbsp; <span class="verified">✔ REAL GAMER</span></div>
+    </div>
+  `).join('');
+}
+
+// ── Star rating (main form) ──
+function setStars(n) {
+  selectedStars = n;
+  document.querySelectorAll('.star-btn').forEach((b,i) => b.classList.toggle('active', i < n));
+}
+
+// ── Star rating (modal) ──
+function setModalStars(n) {
+  modalStars = n;
+  document.querySelectorAll('.modal-star').forEach((b,i) => b.classList.toggle('lit', i < n));
+}
+
+// ── Submit review (main form) ──
+function submitReview() {
+  const name = document.getElementById('f-name').value.trim();
+  const game = document.getElementById('f-game').value.trim();
+  const text = document.getElementById('f-review').value.trim();
+  if (!name || !game || !text || !selectedStars) { alert('Please fill all fields and pick a star rating!'); return; }
+  const emojis = ['🎮','🕹️','⚡','🔥','💀','🏆','🦾','👾'];
+  const rev = { gamer: name, game, stars: selectedStars, text, date: new Date().toISOString().split('T')[0], avatar: emojis[Math.floor(Math.random()*emojis.length)] };
+  allReviews.unshift(rev);
+  renderReviews(allReviews);
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-game').value = '';
+  document.getElementById('f-review').value = '';
+  setStars(0);
+  document.getElementById('reviews').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ── Modal ──
+function openModal(game) {
+  currentModalGame = game;
+  document.getElementById('modal-game-name').textContent = game.name;
+  document.getElementById('modal-game-meta').textContent = `Released: ${game.released || 'TBA'} · Rating: ${game.rating || 'N/A'}/5`;
+  document.getElementById('modal-gamer').value = '';
+  document.getElementById('modal-text').value = '';
+  setModalStars(0);
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+function submitModalReview() {
+  const gamer = document.getElementById('modal-gamer').value.trim();
+  const text  = document.getElementById('modal-text').value.trim();
+  if (!gamer || !text || !modalStars) { alert('Fill in your tag, review, and rating!'); return; }
+  const emojis = ['🎮','🕹️','⚡','🔥','💀','🏆','🦾','👾'];
+  const rev = { gamer, game: currentModalGame.name, stars: modalStars, text, date: new Date().toISOString().split('T')[0], avatar: emojis[Math.floor(Math.random()*emojis.length)] };
+  allReviews.unshift(rev);
+  renderReviews(allReviews);
+  closeModal();
+  document.getElementById('reviews').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ── RAWG API ──
+const RAWG_KEY = 'c7f928e607c14459a90b9ce99d6c8218'; // free public demo key
+
+async function fetchGames(query = '') {
+  const grid = document.getElementById('games-grid');
+  grid.innerHTML = '<div class="loading"><div class="spinner"></div> FETCHING FROM RAWG API...</div>';
+  try {
+    const url = query
+      ? `https://api.rawg.io/api/games?key=${RAWG_KEY}&search=${encodeURIComponent(query)}&page_size=8`
+      : `https://api.rawg.io/api/games?key=${RAWG_KEY}&ordering=-rating&page_size=8&metacritic=80,100`;
+    const res  = await fetch(url);
+    const data = await res.json();
+    renderGameCards(data.results || []);
+  } catch(e) {
+    grid.innerHTML = '<div class="loading">⚠ API UNAVAILABLE — SHOWING DEMO DATA</div>';
+    renderGameCards(demoGames());
+  }
+}
+
+function searchGames() {
+  const q = document.getElementById('game-search').value.trim();
+  fetchGames(q);
+}
+
+function renderGameCards(games) {
+  const grid = document.getElementById('games-grid');
+  if (!games.length) { grid.innerHTML = '<div class="loading">NO GAMES FOUND. TRY ANOTHER SEARCH.</div>'; return; }
+  grid.innerHTML = games.map(g => {
+    const rating = g.rating ? g.rating.toFixed(1) : 'N/A';
+    const imgHtml = g.background_image
+      ? `<img src="${g.background_image}" alt="${g.name}" loading="lazy">`
+      : `<div style="font-size:48px;display:flex;align-items:center;justify-content:center;height:100%;">🎮</div>`;
+    return `
+      <div class="game-card" onclick="openModal(${JSON.stringify(g).replace(/"/g,'&quot;')})">
+        <div class="game-card-img" style="position:relative;overflow:hidden;">
+          ${imgHtml}
+          <div class="card-rating">${rating}★</div>
+        </div>
+        <div class="game-card-body">
+          <div class="game-title">${g.name}</div>
+          <div class="game-meta">${g.released || 'TBA'} · ${(g.genres||[]).slice(0,2).map(x=>x.name).join(', ') || 'Game'}</div>
+          <button class="review-btn">WRITE REVIEW</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function demoGames() {
+  return [
+    { name: 'Elden Ring',          released: '2022-02-25', rating: 4.7, background_image: null, genres: [{name:'RPG'}] },
+    { name: "Baldur's Gate 3",     released: '2023-08-03', rating: 4.9, background_image: null, genres: [{name:'RPG'}] },
+    { name: 'Cyberpunk 2077',      released: '2020-12-10', rating: 4.2, background_image: null, genres: [{name:'Action'}] },
+    { name: 'Hades',               released: '2020-09-17', rating: 4.8, background_image: null, genres: [{name:'Roguelike'}] },
+    { name: 'Red Dead Redemption 2', released: '2018-10-26', rating: 4.8, background_image: null, genres: [{name:'Adventure'}] },
+    { name: 'God of War Ragnarök', released: '2022-11-09', rating: 4.8, background_image: null, genres: [{name:'Action'}] },
+    { name: 'Hollow Knight',       released: '2017-02-24', rating: 4.7, background_image: null, genres: [{name:'Platformer'}] },
+    { name: 'The Witcher 3',       released: '2015-05-19', rating: 4.8, background_image: null, genres: [{name:'RPG'}] },
+  ];
+}
+
+// ── Init ──
+allReviews = [...seedReviews];
+renderReviews(allReviews);
+fetchGames();
+
+// Close modal on overlay click
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
+</body>
+</html>
